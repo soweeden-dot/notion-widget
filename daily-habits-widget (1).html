@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Habits</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: #FAF7F2; color: #3A3229; padding: 2rem 1.5rem; min-height: 100vh; }
+  .top-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; }
+  .page-title { font-size: 26px; font-weight: 600; color: #3A3229; letter-spacing: -0.5px; }
+  .page-sub { font-size: 13px; color: #9C8E82; margin-top: 3px; }
+  .circle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .circle-label { font-size: 10px; color: #9C8E82; letter-spacing: 0.07em; text-transform: uppercase; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; color: #9C8E82; text-transform: uppercase; margin-bottom: 0.6rem; margin-top: 1.5rem; }
+  .habit-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #EDE8E1; border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+  .habit-row:hover { border-color: #C8BFB5; }
+  .habit-row.checked { background: #F5F1EB; border-color: #E0D8CE; }
+  .check-box { width: 19px; height: 19px; border-radius: 5px; border: 1.5px solid #C8BFB5; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; background: white; }
+  .check-box.done { background: #8B7355; border-color: #8B7355; }
+  .checkmark { display: none; width: 11px; height: 8px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); }
+  .check-box.done .checkmark { display: block; }
+  .habit-name { font-size: 14px; color: #3A3229; flex: 1; transition: color 0.15s; }
+  .habit-row.checked .habit-name { color: #B0A396; text-decoration: line-through; text-decoration-color: #C8BFB5; }
+  .streak { font-size: 11px; color: #9C8E82; background: #F0EBE3; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .divider { height: 1px; background: #EDE8E1; margin: 1.5rem 0; }
+  .water-card { background: #FFFFFF; border: 1px solid #EDE8E1; border-radius: 12px; padding: 1.25rem; margin-top: 0.5rem; }
+  .water-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+  .water-title { font-size: 13px; font-weight: 600; color: #3A3229; }
+  .water-goal { font-size: 11px; color: #9C8E82; }
+  .water-subtitle { font-size: 11px; color: #B0A396; margin-bottom: 1rem; }
+  .water-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .water-btn { padding: 12px 8px; border: 1px solid #EDE8E1; border-radius: 10px; background: white; font-size: 13px; color: #6B5E52; cursor: pointer; text-align: center; transition: all 0.15s; font-family: inherit; position: relative; }
+  .water-btn:hover { border-color: #C8BFB5; background: #FAF7F2; }
+  .water-btn:active { transform: scale(0.96); }
+  .btn-label { display: block; font-size: 13px; color: #6B5E52; }
+  .btn-tap { display: block; font-size: 10px; color: #9C8E82; margin-top: 2px; }
+  .btn-count { position: absolute; top: -7px; right: -7px; background: #8B7355; color: white; font-size: 10px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border: 2px solid #FAF7F2; }
+  .btn-count.visible { opacity: 1; }
+  .water-bar-bg { height: 8px; background: #F0EBE3; border-radius: 4px; overflow: hidden; }
+  .water-bar-fill { height: 100%; background: linear-gradient(90deg, #A08060, #8B7355); border-radius: 4px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+  .water-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .water-msg { font-size: 11px; color: #9C8E82; }
+  .water-total { font-size: 13px; color: #8B7355; font-weight: 600; }
+  .water-reset { display: block; margin-top: 10px; text-align: center; font-size: 11px; color: #D0C8BE; cursor: pointer; background: none; border: none; font-family: inherit; padding: 4px; width: 100%; }
+  .water-reset:hover { color: #9C8E82; }
+</style>
+</head>
+<body>
+
+<div class="top-row">
+  <div>
+    <div class="page-title">🌿 Daily Habits</div>
+    <div class="page-sub" id="today-date"></div>
+  </div>
+  <div class="circle-wrap">
+    <svg width="74" height="74" viewBox="0 0 74 74">
+      <circle cx="37" cy="37" r="30" fill="none" stroke-width="5" stroke="#EDE8E1"/>
+      <circle cx="37" cy="37" r="30" fill="none" stroke-width="5" stroke="#8B7355"
+        stroke-dasharray="188.5" stroke-dashoffset="188.5"
+        stroke-linecap="round" transform="rotate(-90 37 37)"
+        id="progress-ring" style="transition: stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1);"/>
+      <text x="37" y="34" text-anchor="middle" font-size="15" font-weight="600" fill="#3A3229" font-family="-apple-system,sans-serif" id="pct-text">0%</text>
+      <text x="37" y="47" text-anchor="middle" font-size="9" fill="#9C8E82" font-family="-apple-system,sans-serif" id="count-text">0 of 8</text>
+    </svg>
+    <span class="circle-label">Today</span>
+  </div>
+</div>
+
+<div class="section-label">☀️ Morning</div>
+<div class="habit-row" onclick="toggle(this,0)"><div class="check-box" id="cb0"><div class="checkmark"></div></div><span class="habit-name">Morning routine</span><span class="streak" id="s0">0 day streak</span></div>
+<div class="habit-row" onclick="toggle(this,1)"><div class="check-box" id="cb1"><div class="checkmark"></div></div><span class="habit-name">Shower</span><span class="streak" id="s1">0 day streak</span></div>
+<div class="habit-row" onclick="toggle(this,2)"><div class="check-box" id="cb2"><div class="checkmark"></div></div><span class="habit-name">Skincare — AM</span><span class="streak" id="s2">0 day streak</span></div>
+
+<div class="section-label">🌤️ During the Day</div>
+<div class="habit-row" onclick="toggle(this,3)"><div class="check-box" id="cb3"><div class="checkmark"></div></div><span class="habit-name">Homework / studying done</span><span class="streak" id="s3">0 day streak</span></div>
+<div class="habit-row" onclick="toggle(this,4)"><div class="check-box" id="cb4"><div class="checkmark"></div></div><span class="habit-name">Workout</span><span class="streak" id="s4">0 day streak</span></div>
+<div class="habit-row" onclick="toggle(this,5)"><div class="check-box" id="cb5"><div class="checkmark"></div></div><span class="habit-name">Meals logged</span><span class="streak" id="s5">0 day streak</span></div>
+
+<div class="section-label">🌙 Evening</div>
+<div class="habit-row" onclick="toggle(this,6)"><div class="check-box" id="cb6"><div class="checkmark"></div></div><span class="habit-name">Skincare — PM</span><span class="streak" id="s6">0 day streak</span></div>
+<div class="habit-row" onclick="toggle(this,7)"><div class="check-box" id="cb7"><div class="checkmark"></div></div><span class="habit-name">Evening routine / bed on time</span><span class="streak" id="s7">0 day streak</span></div>
+
+<div class="divider"></div>
+
+<div class="section-label">💧 Water Intake</div>
+<div class="water-card">
+  <div class="water-header">
+    <div class="water-title">Tap each time you drink</div>
+    <div class="water-goal">Goal: 100 oz</div>
+  </div>
+  <div class="water-subtitle">Taps add up — keeps a running total all day</div>
+  <div class="water-options">
+    <div class="water-btn" onclick="addWater(0)">
+      <span class="btn-label">Half small cup</span>
+      <span class="btn-tap">+4 oz per tap</span>
+      <span class="btn-count" id="wc0">0</span>
+    </div>
+    <div class="water-btn" onclick="addWater(1)">
+      <span class="btn-label">Full small cup</span>
+      <span class="btn-tap">+8 oz per tap</span>
+      <span class="btn-count" id="wc1">0</span>
+    </div>
+    <div class="water-btn" onclick="addWater(2)">
+      <span class="btn-label">Half Stanley</span>
+      <span class="btn-tap">+20 oz per tap</span>
+      <span class="btn-count" id="wc2">0</span>
+    </div>
+    <div class="water-btn" onclick="addWater(3)">
+      <span class="btn-label">Full Stanley</span>
+      <span class="btn-tap">+40 oz per tap</span>
+      <span class="btn-count" id="wc3">0</span>
+    </div>
+  </div>
+  <div class="water-bar-bg"><div class="water-bar-fill" id="water-fill"></div></div>
+  <div class="water-meta">
+    <div class="water-msg" id="water-msg">Start tapping to track your water</div>
+    <div class="water-total" id="water-total"></div>
+  </div>
+  <button class="water-reset" onclick="resetWater()">reset today's water</button>
+</div>
+
+<script>
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var now = new Date();
+  document.getElementById('today-date').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+
+  var today = now.toISOString().split('T')[0];
+  var saved = JSON.parse(localStorage.getItem('habits_' + today) || '{}');
+  var checked = saved.checked || [false,false,false,false,false,false,false,false];
+  var streaks = JSON.parse(localStorage.getItem('habit_streaks') || '[0,0,0,0,0,0,0,0]');
+  var waterCounts = saved.waterCounts || [0,0,0,0];
+  var waterOz = [4,8,20,40];
+  var total = 8;
+  var circumference = 2 * Math.PI * 30;
+
+  checked.forEach(function(c,i) {
+    if(c){ document.getElementById('cb'+i).classList.add('done'); document.querySelectorAll('.habit-row')[i].classList.add('checked'); }
+    document.getElementById('s'+i).textContent = streaks[i] + ' day streak';
+  });
+  updateCircle();
+  updateWaterUI();
+
+  function updateCircle(){
+    var done = checked.filter(Boolean).length;
+    var pct = Math.round((done/total)*100);
+    document.getElementById('progress-ring').setAttribute('stroke-dashoffset', circumference-(pct/100)*circumference);
+    document.getElementById('pct-text').textContent = pct+'%';
+    document.getElementById('count-text').textContent = done+' of '+total;
+  }
+
+  function toggle(row,i){
+    checked[i]=!checked[i];
+    row.classList.toggle('checked',checked[i]);
+    document.getElementById('cb'+i).classList.toggle('done',checked[i]);
+    if(checked[i]){streaks[i]++;}else{streaks[i]=Math.max(0,streaks[i]-1);}
+    document.getElementById('s'+i).textContent=streaks[i]+' day streak';
+    localStorage.setItem('habit_streaks',JSON.stringify(streaks));
+    saveState(); updateCircle();
+  }
+
+  function addWater(i){
+    waterCounts[i]++;
+    saveState(); updateWaterUI();
+  }
+
+  function resetWater(){
+    waterCounts=[0,0,0,0];
+    saveState(); updateWaterUI();
+  }
+
+  function updateWaterUI(){
+    var totalOz=0;
+    waterCounts.forEach(function(count,i){
+      totalOz+=count*waterOz[i];
+      var el=document.getElementById('wc'+i);
+      el.textContent=waterCounts[i];
+      el.classList.toggle('visible',waterCounts[i]>0);
+    });
+    var pct=Math.min(Math.round((totalOz/100)*100),100);
+    document.getElementById('water-fill').style.width=pct+'%';
+    var msg='', tot='';
+    if(totalOz===0){msg='Start tapping to track your water';}
+    else if(totalOz<40){msg='Good start — keep sipping'; tot=totalOz+' / 100 oz';}
+    else if(totalOz<70){msg='Halfway there — keep going'; tot=totalOz+' / 100 oz';}
+    else if(totalOz<100){msg='Almost there — you got this'; tot=totalOz+' / 100 oz';}
+    else{msg='Goal reached — incredible today'; tot=totalOz+' oz ✓';}
+    document.getElementById('water-msg').textContent=msg;
+    document.getElementById('water-total').textContent=tot;
+  }
+
+  function saveState(){
+    localStorage.setItem('habits_'+today, JSON.stringify({checked:checked, waterCounts:waterCounts}));
+  }
+</script>
+</body>
+</html>
