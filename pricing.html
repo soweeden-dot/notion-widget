@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Keep Track - Pricing</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .pricing {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      width: 250px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Choose Your Plan</h1>
+
+  <div class="pricing">
+    <div class="card">
+      <h2>Base</h2>
+      <p>$5/month</p>
+      <button onclick="startCheckout('price_1TJe1lJfNPG6Dwp5WJlfz8eq')">Get Base</button>
+    </div>
+
+    <div class="card">
+      <h2>Pro</h2>
+      <p>$10/month</p>
+      <button onclick="startCheckout('price_1TJe2JJfNPG6Dwp5COfH2g7X')">Get Pro</button>
+    </div>
+
+    <div class="card">
+      <h2>Custom</h2>
+      <p>$25/month</p>
+      <button onclick="startCheckout('price_1TJe2jJfNPG6Dwp5pvJRYIFU')">Get Custom</button>
+    </div>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://yhkhyxvaoqxfulrushcj.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inloa2h5eHZhb3F4ZnVscnVzaGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjgxODAsImV4cCI6MjA5MDY0NDE4MH0.C_sAB2hdrJ6_F3S-v1triTO2Ks8oadyxQHkG6MHR0xk";
+
+    const sb = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function startCheckout(priceId) {
+      const { data } = await sb.auth.getUser();
+      const user = data.user;
+
+      if (!user) {
+        alert("You must be logged in.");
+        return;
+      }
+
+      const res = await fetch("https://keep-track-stripe.soweeden.workers.dev/create-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          priceId,
+          userId: user.id
+        })
+      });
+
+      const checkout = await res.json();
+      window.location.href = checkout.url;
+    }
+  </script>
+
+</body>
+</html>
