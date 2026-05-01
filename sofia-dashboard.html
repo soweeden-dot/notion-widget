@@ -3022,6 +3022,12 @@
         </div>
 
         <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
+          <div style="font-size:13px;color:#3A3229;font-weight:500;margin-bottom:2px;">Cloudflare Worker URL</div>
+          <div style="font-size:11px;color:#9C8E82;margin-bottom:8px;">Your deployed Notion proxy Worker — deploy <code style="background:#F5F0E8;padding:1px 5px;border-radius:4px;font-size:11px;">notion-worker.js</code> from the repo</div>
+          <input id="notion-worker-input" type="text" class="bf-input" style="width:100%;border:1px solid #EDE8E1;padding:8px 12px;border-radius:8px;font-size:12px;box-sizing:border-box;" placeholder="https://sofia-notion-proxy.soweeden.workers.dev" onchange="saveNotionWorkerUrl()" />
+        </div>
+
+        <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
           <div style="font-size:13px;color:#3A3229;font-weight:500;margin-bottom:2px;">Parent Page ID</div>
           <div style="font-size:11px;color:#9C8E82;margin-bottom:8px;">Notion page where all your databases will be created — copy the ID from the page URL</div>
           <input id="notion-parent-page-input" type="text" class="bf-input" style="width:100%;border:1px solid #EDE8E1;padding:8px 12px;border-radius:8px;font-size:12px;box-sizing:border-box;" placeholder="Paste page ID from Notion URL..." onchange="saveNotionParentPage()" />
@@ -3055,12 +3061,14 @@
           </button>
           <div id="notion-help-body" style="display:none;margin-top:10px;">
             <div style="font-size:12px;color:#6B5E52;line-height:1.7;background:#FAF7F2;border-radius:10px;padding:12px 14px;">
-              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">1. Create a Notion integration</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">1. Deploy the Cloudflare Worker</div>
+              <div style="margin-bottom:10px;">In Cloudflare dashboard, create a new Worker and paste the contents of <code style="background:#EDE8E1;padding:1px 5px;border-radius:4px;">notion-worker.js</code> from the repo. Copy the worker URL and paste it above.</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">2. Create a Notion integration</div>
               <div style="margin-bottom:10px;">Go to <strong>notion.so/my-integrations</strong>, click "New integration", name it "Keep Track", copy the Internal Integration Secret and paste above.</div>
-              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">2. Create a parent page &amp; share it</div>
-              <div style="margin-bottom:10px;">Create a blank Notion page (e.g. "Keep Track Hub"). Open it, go to <strong>··· → Connections</strong> and add your integration. Then copy the page ID from the URL — it's the long alphanumeric string after the last <code style="background:#EDE8E1;padding:1px 5px;border-radius:4px;">/</code>.</div>
-              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">3. Push</div>
-              <div>Tap "Push All →" — all 28 databases will be created automatically in your page and populated with your data. First push takes 30–60 seconds.</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">3. Create a parent page &amp; share it</div>
+              <div style="margin-bottom:10px;">Create a blank Notion page (e.g. "Keep Track Hub"). Open it, go to <strong>··· → Connections</strong> and add your integration. Then copy the page ID from the URL (the long string after the last <code style="background:#EDE8E1;padding:1px 5px;border-radius:4px;">/</code>).</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">4. Push</div>
+              <div>Tap "Push All →" — all 28 databases will be created and synced. First push takes 30–60 seconds.</div>
             </div>
           </div>
         </div>
@@ -9711,12 +9719,14 @@ function reinitFromDB() {
 
 // ========== NOTION SYNC ==========
 
-var NOTION_PROXY = '/api/notion';
+var NOTION_PROXY = localStorage.getItem('sofia_notion_worker') || '';
 
 // Core fetch — calls the Vercel proxy which forwards to Notion API
 async function notionFetch(ep, method, body) {
   var token = localStorage.getItem('notion_token');
   if (!token) throw new Error('No Notion token — add it in Settings → Notion Sync');
+  NOTION_PROXY = localStorage.getItem('sofia_notion_worker') || '';
+  if (!NOTION_PROXY) throw new Error('No Notion Worker URL — add it in Settings → Notion Sync');
   var res = await fetch(NOTION_PROXY, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -10524,6 +10534,12 @@ function saveNotionToken() {
   if (t) { localStorage.setItem('notion_token',t); inp.value=''; inp.placeholder='secret_...saved ✓'; notionToast('Token saved ✓'); }
 }
 
+function saveNotionWorkerUrl() {
+  var inp = document.getElementById('notion-worker-input'); if (!inp) return;
+  var url = inp.value.trim().replace(/\/$/, '');
+  if (url) { localStorage.setItem('sofia_notion_worker', url); NOTION_PROXY = url; inp.value = ''; inp.placeholder = url; notionToast('Worker URL saved ✓'); }
+}
+
 function saveNotionParentPage() {
   var inp = document.getElementById('notion-parent-page-input'); if (!inp) return;
   var id = inp.value.trim().replace(/-/g,'');
@@ -10549,6 +10565,8 @@ function toggleNotionHelp() {
 function loadNotionSettings() {
   var ti = document.getElementById('notion-token-input');
   if (ti) { ti.value=''; ti.placeholder=localStorage.getItem('notion_token')?'secret_...saved ✓':'secret_...'; }
+  var wi = document.getElementById('notion-worker-input');
+  if (wi) { var sw=localStorage.getItem('sofia_notion_worker'); wi.value=''; wi.placeholder=sw||'https://sofia-notion-proxy.soweeden.workers.dev'; }
   var pi = document.getElementById('notion-parent-page-input');
   if (pi) { var sp=localStorage.getItem('notion_parent_page'); pi.value=''; pi.placeholder=sp?(sp.slice(0,8)+'...saved ✓'):'Paste page ID from Notion URL...'; }
   var at = document.getElementById('notion-autosync-toggle');
