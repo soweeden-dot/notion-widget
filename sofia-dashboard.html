@@ -1384,6 +1384,12 @@
   .gift-name { font-size:13px;color:#3A3229;flex:1; }
   .gift-card.got-item .gift-name { text-decoration:line-through;color:#C0B4A8; }
   .gift-price { font-size:11px;color:#A08B72;font-weight:600; }
+  /* ===== NOTION SYNC DARK MODE ===== */
+  body.dark-mode #notion-sync-settings > .bf-section > div { background: var(--bg-card) !important; border-color: var(--border) !important; }
+  body.dark-mode #notion-sync-settings [style*="border-bottom:1px solid #F5F0E8"] { border-bottom-color: var(--border) !important; }
+  body.dark-mode #notion-sync-settings input.bf-input { background: var(--bg-input) !important; border-color: var(--border) !important; color: var(--text) !important; }
+  body.dark-mode #notion-help-body > div { background: var(--bg-input) !important; color: var(--text-muted) !important; }
+  body.dark-mode #notion-help-body code { background: var(--bg) !important; }
 </style>
 </head>
 <body>
@@ -3002,6 +3008,66 @@
       </div>
     </div>
     </div><!-- end school-sync-settings -->
+
+    <!-- Notion Sync -->
+    <div id="notion-sync-settings">
+    <div class="bf-section" style="margin-bottom:1.75rem;">
+      <div class="bf-section-title"><span>🔗 Notion Sync</span></div>
+      <div style="background:white;border-radius:14px;border:1px solid #EDE8E1;overflow:hidden;">
+
+        <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
+          <div style="font-size:13px;color:#3A3229;font-weight:500;margin-bottom:2px;">Integration Token</div>
+          <div style="font-size:11px;color:#9C8E82;margin-bottom:8px;">Your Notion internal integration secret (starts with <code style="background:#F5F0E8;padding:1px 5px;border-radius:4px;font-size:11px;">secret_</code>)</div>
+          <input id="notion-token-input" type="password" class="bf-input" style="width:100%;border:1px solid #EDE8E1;padding:8px 12px;border-radius:8px;font-size:12px;box-sizing:border-box;" placeholder="secret_..." onchange="saveNotionToken()" />
+        </div>
+
+        <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
+          <div style="font-size:13px;color:#3A3229;font-weight:500;margin-bottom:2px;">Parent Page ID</div>
+          <div style="font-size:11px;color:#9C8E82;margin-bottom:8px;">Notion page where all your databases will be created — copy the ID from the page URL</div>
+          <input id="notion-parent-page-input" type="text" class="bf-input" style="width:100%;border:1px solid #EDE8E1;padding:8px 12px;border-radius:8px;font-size:12px;box-sizing:border-box;" placeholder="Paste page ID from Notion URL..." onchange="saveNotionParentPage()" />
+        </div>
+
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #F5F0E8;">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#3A3229;">Auto-Sync</div>
+            <div style="font-size:11px;color:#9C8E82;">Push changes to Notion automatically after every save</div>
+          </div>
+          <div class="toggle-switch" id="notion-autosync-toggle" onclick="toggleNotionAutoSync()"><div class="toggle-knob"></div></div>
+        </div>
+
+        <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
+          <div style="display:flex;gap:8px;">
+            <button onclick="pushAllToNotion()" style="flex:1;padding:9px 12px;background:linear-gradient(135deg,#F5EFE6,#EDE0CE);border:1px solid #D4BFA3;border-radius:10px;font-size:12px;font-weight:600;color:#7A6548;cursor:pointer;font-family:inherit;">Push All →</button>
+            <button onclick="pullFromAllNotion()" style="flex:1;padding:9px 12px;background:white;border:1.5px solid #EDE8E1;border-radius:10px;font-size:12px;font-weight:600;color:#9C8E82;cursor:pointer;font-family:inherit;">← Pull All</button>
+          </div>
+          <div id="notion-sync-banner" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px;"></div>
+        </div>
+
+        <div style="padding:12px 16px;border-bottom:1px solid #F5F0E8;">
+          <div style="font-size:11px;font-weight:700;color:#9C8E82;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;">Database Status</div>
+          <div id="notion-db-status-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+
+        <div style="padding:12px 16px;">
+          <button onclick="toggleNotionHelp()" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:#9C8E82;padding:0;width:100%;text-align:left;">
+            <svg id="notion-help-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform 0.2s;flex-shrink:0;"><path d="M3 4.5l3 3 3-3" stroke="#9C8E82" stroke-width="1.3" stroke-linecap="round"/></svg>
+            How to set this up
+          </button>
+          <div id="notion-help-body" style="display:none;margin-top:10px;">
+            <div style="font-size:12px;color:#6B5E52;line-height:1.7;background:#FAF7F2;border-radius:10px;padding:12px 14px;">
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">1. Create a Notion integration</div>
+              <div style="margin-bottom:10px;">Go to <strong>notion.so/my-integrations</strong>, click "New integration", name it "Keep Track", copy the Internal Integration Secret and paste above.</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">2. Create a parent page &amp; share it</div>
+              <div style="margin-bottom:10px;">Create a blank Notion page (e.g. "Keep Track Hub"). Open it, go to <strong>··· → Connections</strong> and add your integration. Then copy the page ID from the URL — it's the long alphanumeric string after the last <code style="background:#EDE8E1;padding:1px 5px;border-radius:4px;">/</code>.</div>
+              <div style="font-weight:600;color:#3A3229;margin-bottom:3px;">3. Push</div>
+              <div>Tap "Push All →" — all 28 databases will be created automatically in your page and populated with your data. First push takes 30–60 seconds.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </div><!-- end notion-sync-settings -->
 
     <!-- Account -->
     <div class="bf-section" style="margin-bottom:1.75rem;">
@@ -9642,6 +9708,887 @@ function reinitFromDB() {
     if (tabBtn) try { switchTab(defTab, tabBtn); } catch(e){}
   }
 }
+
+// ========== NOTION SYNC ==========
+
+var NOTION_PROXY = '/api/notion';
+
+// Core fetch — calls the Vercel proxy which forwards to Notion API
+async function notionFetch(ep, method, body) {
+  var token = localStorage.getItem('notion_token');
+  if (!token) throw new Error('No Notion token — add it in Settings → Notion Sync');
+  var res = await fetch(NOTION_PROXY, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({endpoint: ep, method: method || 'GET', body: body || null, token: token})
+  });
+  var data = await res.json();
+  if (!res.ok) throw new Error((data && (data.message || data.error)) || ('Notion error ' + res.status));
+  return data;
+}
+
+// Query all pages from a database (handles pagination)
+async function notionQueryAll(dbId, filter) {
+  var all = [], cursor;
+  do {
+    var reqBody = {page_size: 100};
+    if (cursor) reqBody.start_cursor = cursor;
+    if (filter) reqBody.filter = filter;
+    var res = await notionFetch('databases/' + dbId + '/query', 'POST', reqBody);
+    all = all.concat(res.results || []);
+    cursor = res.has_more ? res.next_cursor : null;
+  } while (cursor);
+  return all;
+}
+
+// Get or create a Notion database under a parent page
+async function notionGetOrCreateDb(dbKey, dbName, parentId, properties) {
+  var id = localStorage.getItem(dbKey);
+  if (id) return id;
+  var db = await notionFetch('databases', 'POST', {
+    parent: {type: 'page_id', page_id: parentId},
+    title: [{type: 'text', text: {content: dbName}}],
+    properties: properties
+  });
+  localStorage.setItem(dbKey, db.id);
+  return db.id;
+}
+
+// --- Property builders (local → Notion) ---
+function nTitle(s) { return {title: [{type: 'text', text: {content: String(s || '').slice(0, 2000)}}]}; }
+function nRT(s) { return s ? {rich_text: [{type: 'text', text: {content: String(s).slice(0, 2000)}}]} : {rich_text: []}; }
+function nSelect(s) { return s ? {select: {name: String(s)}} : {select: null}; }
+function nDate(s) { return s ? {date: {start: String(s)}} : {date: null}; }
+function nNumber(n) { var v = parseFloat(n); return {number: isNaN(v) ? null : v}; }
+function nCheck(b) { return {checkbox: !!b}; }
+function nUrl(u) { return u ? {url: String(u)} : {url: null}; }
+
+// --- Property readers (Notion → local) ---
+function gTitle(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.title && r.title[0]) ? r.title[0].plain_text : ''; }
+function gRT(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.rich_text && r.rich_text[0]) ? r.rich_text[0].plain_text : ''; }
+function gSelect(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.select) ? r.select.name : ''; }
+function gDate(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.date) ? r.date.start : ''; }
+function gNumber(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.number !== null && r.number !== undefined) ? r.number : null; }
+function gCheck(p, key) { var r = p && p.properties && p.properties[key]; return !!(r && r.checkbox); }
+function gUrl(p, key) { var r = p && p.properties && p.properties[key]; return (r && r.url) ? r.url : ''; }
+
+// --- Toast notification ---
+function notionToast(msg, isError) {
+  var el = document.getElementById('notion-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'notion-toast';
+    el.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:99999;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;pointer-events:none;transition:opacity 0.3s;font-family:-apple-system,Helvetica Neue,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.1);';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.background = isError ? '#FFF0EE' : '#F0FDF4';
+  el.style.color = isError ? '#C06060' : '#2D6A4F';
+  el.style.border = '1px solid ' + (isError ? '#F5C8C8' : '#B7E4C7');
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.style.opacity = '0'; }, 3000);
+}
+
+function showNotionBanner(msg, isError) {
+  var el = document.getElementById('notion-sync-banner');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = isError ? '#FFF0EE' : '#F0FDF4';
+  el.style.color = isError ? '#C06060' : '#2D6A4F';
+  el.style.border = '1px solid ' + (isError ? '#F5C8C8' : '#B7E4C7');
+  clearTimeout(el._hideT);
+  if (!isError) el._hideT = setTimeout(function() { el.style.display = 'none'; }, 5000);
+}
+
+// --- Per-database sync status ---
+var _notionSyncStatus = {};
+var _NOTION_DB_NAMES = {
+  'notion_db_bf_interests': 'His Interests', 'notion_db_bf_date_ideas': 'Date Ideas',
+  'notion_db_bf_memories': 'Memory Log', 'notion_db_bf_imp_dates': 'Important Dates',
+  'notion_db_bf_gifts': 'Gift Ideas', 'notion_db_personal_wishlist': 'Shopping Wishlist',
+  'notion_db_personal_rels': 'Relationships', 'notion_db_personal_travel': 'Travel',
+  'notion_db_media_books': 'Books', 'notion_db_media_shows': 'Movies & Shows',
+  'notion_db_media_coffee': 'Coffee Shops', 'notion_db_goals': 'Goals & Life Vision',
+  'notion_db_acad_certs': 'Certs & Courses', 'notion_db_acad_extras': 'Extracurriculars',
+  'notion_db_acad_colleges': 'College Research', 'notion_db_acad_scholarships': 'Scholarships',
+  'notion_db_acad_resume': 'Resume', 'notion_db_work_services': 'Services',
+  'notion_db_work_payments': 'Payments', 'notion_db_work_ideas': 'Ideas',
+  'notion_db_work_contacts': 'Contacts', 'notion_db_social_content': 'Content Ideas',
+  'notion_db_social_schedule': 'Post Schedule', 'notion_db_social_stats': 'Stats & Growth',
+  'notion_db_social_deals': 'Brand Deals', 'notion_db_social_audit': 'Account Audit',
+  'notion_db_supplements': 'Vitamins', 'notion_db_finance': 'Finance'
+};
+
+function _setNotionSyncStatus(dbKey, ok, count) {
+  _notionSyncStatus[dbKey] = {ok: ok, count: count, time: Date.now()};
+  renderNotionDbStatus();
+}
+
+function renderNotionDbStatus() {
+  var el = document.getElementById('notion-db-status-list');
+  if (!el) return;
+  var html = '';
+  Object.keys(_NOTION_DB_NAMES).forEach(function(key) {
+    var name = _NOTION_DB_NAMES[key];
+    var dbId = localStorage.getItem(key);
+    var s = _notionSyncStatus[key];
+    var dotColor, timeStr;
+    if (!dbId) {
+      dotColor = '#E0D8D0'; timeStr = 'Not linked';
+    } else if (s) {
+      dotColor = s.ok ? '#7EC8A0' : '#E88080';
+      var mins = Math.round((Date.now() - s.time) / 60000);
+      timeStr = s.ok ? (mins < 1 ? 'Just now' : mins + 'm ago') : 'Error';
+    } else {
+      dotColor = '#B0D4E0'; timeStr = 'Linked';
+    }
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:2px 0;">' +
+      '<span style="width:7px;height:7px;border-radius:50%;background:' + dotColor + ';display:inline-block;flex-shrink:0;"></span>' +
+      '<div style="flex:1;font-size:12px;color:#6B5E52;">' + escHtml(name) + '</div>' +
+      '<div style="font-size:11px;color:#C0B4A8;">' + timeStr + '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+// ============================================================
+// GENERIC PUSH HELPER
+// ============================================================
+
+async function _genericPush(dbKey, dbName, properties, items, toProps, getTitle, saveIds, saveBack) {
+  var parentId = localStorage.getItem('notion_parent_page');
+  if (!parentId) throw new Error('Set a parent page ID in Settings → Notion Sync first');
+  var dbId = await notionGetOrCreateDb(dbKey, dbName, parentId, properties);
+  var existing = await notionQueryAll(dbId);
+
+  // Find which property is the title
+  var titlePropName = Object.keys(properties).find(function(k) {
+    return properties[k] && properties[k].title !== undefined;
+  }) || 'Name';
+
+  var byNotionId = {}, byTitle = {};
+  existing.forEach(function(p) {
+    byNotionId[p.id] = true;
+    var t = gTitle(p, titlePropName);
+    if (t) byTitle[t.toLowerCase()] = p.id;
+  });
+
+  var count = 0;
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var title = getTitle(item) || '';
+    var props = toProps(item);
+    var pageId = null;
+    if (item.notionId && byNotionId[item.notionId]) {
+      pageId = item.notionId;
+    } else if (title && byTitle[title.toLowerCase()]) {
+      pageId = byTitle[title.toLowerCase()];
+      if (saveIds && !item.notionId) item.notionId = pageId;
+    }
+    try {
+      if (pageId) {
+        await notionFetch('pages/' + pageId, 'PATCH', {properties: props});
+      } else {
+        var page = await notionFetch('pages', 'POST', {parent: {database_id: dbId}, properties: props});
+        if (saveIds) item.notionId = page.id;
+        if (title) byTitle[title.toLowerCase()] = page.id;
+        byNotionId[page.id] = true;
+      }
+      count++;
+    } catch(e) { console.warn('Notion push item error:', e.message, item); }
+  }
+  if (saveBack) saveBack();
+  _setNotionSyncStatus(dbKey, true, count);
+  return count;
+}
+
+async function _genericPullPages(dbKey) {
+  var dbId = localStorage.getItem(dbKey);
+  if (!dbId) return [];
+  return notionQueryAll(dbId);
+}
+
+// ============================================================
+// PUSH FUNCTIONS
+// ============================================================
+
+async function _pushBfInterests() {
+  var items = [];
+  Object.keys(bfData.interests || {}).forEach(function(cat) {
+    (bfData.interests[cat] || []).forEach(function(text) { items.push({_cat: cat, _text: text}); });
+  });
+  return _genericPush('notion_db_bf_interests', 'His Likes & Interests',
+    {'Name':{title:{}},'Category':{select:{options:[{name:'Sports'},{name:'Music'},{name:'Food'},{name:'Movies'},{name:'Hobbies'},{name:'Other'}]}}},
+    items, function(i){return{'Name':nTitle(i._text),'Category':nSelect(i._cat)};}, function(i){return i._text;}, false, null);
+}
+
+async function _pushBfDateIdeas() {
+  var items = (bfData.dateIdeas || []).map(function(t){return{_idea:t};});
+  return _genericPush('notion_db_bf_date_ideas', 'Date Ideas',
+    {'Idea':{title:{}},'Category':{select:{options:[{name:'Stay In'},{name:'Go Out'},{name:'Free'},{name:'Splurge'}]}},'Status':{select:{options:[{name:'Idea'},{name:'Done'}]}}},
+    items, function(i){return{'Idea':nTitle(i._idea),'Status':nSelect('Idea')};}, function(i){return i._idea;}, false, null);
+}
+
+async function _pushBfMemories() {
+  return _genericPush('notion_db_bf_memories', 'Memory Log',
+    {'Title':{title:{}},'Date':{date:{}},'Mood':{select:{options:[{name:'Adventure'},{name:'Cozy'},{name:'Milestone'},{name:'Silly'}]}}},
+    bfData.memories||[], function(m){return{'Title':nTitle(m.text),'Date':nDate(m.date)};}, function(m){return m.text;}, true, saveBf);
+}
+
+async function _pushBfImportantDates() {
+  return _genericPush('notion_db_bf_imp_dates', 'Important Dates',
+    {'Name':{title:{}},'Date':{date:{}},'Note':{rich_text:{}}},
+    bfData.importantDates||[], function(d){return{'Name':nTitle(d.name),'Date':nDate(d.date),'Note':nRT(d.note)};}, function(d){return d.name;}, true, saveBf);
+}
+
+async function _pushBfGifts() {
+  return _genericPush('notion_db_bf_gifts', 'Gift Ideas',
+    {'Gift':{title:{}},'Status':{select:{options:[{name:'Idea'},{name:'Bought'},{name:'Given'}]}}},
+    bfData.gifts||[], function(g){return{'Gift':nTitle(g.name),'Status':nSelect(g.status||'idea')};}, function(g){return g.name;}, true, saveBf);
+}
+
+async function _pushPersonalWishlist() {
+  return _genericPush('notion_db_personal_wishlist', 'Shopping Wishlist',
+    {'Item':{title:{}},'Category':{select:{options:[{name:'Need'},{name:'Want'},{name:'Bought'}]}},'Price':{rich_text:{}},'Link':{url:{}}},
+    personalData.wishlist||[],
+    function(i){return{'Item':nTitle(i.name),'Category':nSelect(i.got?'Bought':'Want'),'Price':nRT(i.price),'Link':nUrl(i.link)};},
+    function(i){return i.name;}, true, savePersonal);
+}
+
+async function _pushPersonalRelationships() {
+  return _genericPush('notion_db_personal_rels', 'Relationships',
+    {'Name':{title:{}},'Relationship':{select:{options:[{name:'Friend'},{name:'Family'},{name:'Acquaintance'},{name:'Mentor'},{name:'Partner'},{name:'Other'}]}},'Note':{rich_text:{}}},
+    personalData.relationships||[],
+    function(r){return{'Name':nTitle(r.name),'Relationship':nSelect(r.type),'Note':nRT(r.note)};},
+    function(r){return r.name;}, true, savePersonal);
+}
+
+async function _pushPersonalTravel() {
+  var items = [];
+  ((personalData.travel||{}).want||[]).forEach(function(p){items.push({_p:p,_s:'Dream'});});
+  ((personalData.travel||{}).been||[]).forEach(function(p){items.push({_p:p,_s:'Been'});});
+  return _genericPush('notion_db_personal_travel', 'Travel',
+    {'Place':{title:{}},'Status':{select:{options:[{name:'Dream'},{name:'Been'}]}}},
+    items, function(i){return{'Place':nTitle(i._p),'Status':nSelect(i._s)};}, function(i){return i._p;}, false, null);
+}
+
+async function _pushMediaBooks() {
+  var items = [];
+  (['reading','want','done']).forEach(function(st){
+    var lbl={reading:'Reading',want:'Want to Read',done:'Finished'}[st];
+    ((mediaData.books||{})[st]||[]).forEach(function(t){items.push({_t:t,_s:lbl});});
+  });
+  return _genericPush('notion_db_media_books','Books',
+    {'Title':{title:{}},'Status':{select:{options:[{name:'Reading'},{name:'Want to Read'},{name:'Finished'}]}}},
+    items, function(i){return{'Title':nTitle(i._t),'Status':nSelect(i._s)};}, function(i){return i._t;}, false, null);
+}
+
+async function _pushMediaShows() {
+  var items = [];
+  (['watching','want','done']).forEach(function(st){
+    var lbl={watching:'Watching',want:'Want to Watch',done:'Seen'}[st];
+    ((mediaData.shows||{})[st]||[]).forEach(function(t){items.push({_t:t,_s:lbl});});
+  });
+  return _genericPush('notion_db_media_shows','Movies & Shows',
+    {'Title':{title:{}},'Status':{select:{options:[{name:'Watching'},{name:'Want to Watch'},{name:'Seen'}]}}},
+    items, function(i){return{'Title':nTitle(i._t),'Status':nSelect(i._s)};}, function(i){return i._t;}, false, null);
+}
+
+async function _pushMediaCoffee() {
+  var items = [];
+  ((mediaData.coffee||{}).want||[]).forEach(function(n){items.push({_n:n,_s:'Want to Try'});});
+  ((mediaData.coffee||{}).been||[]).forEach(function(n){items.push({_n:n,_s:'Been & Loved'});});
+  return _genericPush('notion_db_media_coffee','Coffee Shops & Places',
+    {'Name':{title:{}},'Status':{select:{options:[{name:'Want to Try'},{name:'Been & Loved'}]}}},
+    items, function(i){return{'Name':nTitle(i._n),'Status':nSelect(i._s)};}, function(i){return i._n;}, false, null);
+}
+
+async function _pushGoalsCombined() {
+  var items = [];
+  (['month','year','fiveyear']).forEach(function(type){
+    var lbl={month:'This Month',year:'This Year',fiveyear:'5 Years'}[type];
+    (goalsData[type]||[]).forEach(function(g){
+      var copy=Object.assign({},g,{_type:lbl}); items.push(copy);
+    });
+  });
+  if (goalsData.dreamlife) {
+    (['career','personal','financial','life']).forEach(function(sec){
+      var text=goalsData.dreamlife[sec];
+      if(text) items.push({text:text,cat:'Other',why:'',done:false,_type:'Dream Life',_dlSec:sec.charAt(0).toUpperCase()+sec.slice(1)});
+    });
+  }
+  return _genericPush('notion_db_goals','Goals & Life Vision',
+    {
+      'Title':{title:{}},'Type':{select:{options:[{name:'This Month'},{name:'This Year'},{name:'5 Years'},{name:'Dream Life'},{name:'Vision Board'}]}},
+      'Category':{select:{options:[{name:'Personal'},{name:'School'},{name:'Work'},{name:'Health'},{name:'Financial'},{name:'Social'},{name:'Other'}]}},
+      'Status':{select:{options:[{name:'Active'},{name:'Done'},{name:'In Progress'}]}},
+      'Why':{rich_text:{}},'Dream Life Section':{select:{options:[{name:'Career'},{name:'Personal'},{name:'Financial'},{name:'Life'}]}}
+    },
+    items,
+    function(g){
+      var props={'Title':nTitle(g.text),'Type':nSelect(g._type),'Category':nSelect(g.cat||'Other'),'Status':nSelect(g.done?'Done':'Active'),'Why':nRT(g.why)};
+      if(g._dlSec) props['Dream Life Section']=nSelect(g._dlSec);
+      return props;
+    },
+    function(g){return g.text;}, true, saveGoals);
+}
+
+async function _pushAcadCerts() {
+  return _genericPush('notion_db_acad_certs','Certifications & Courses',
+    {'Name':{title:{}},'Detail':{rich_text:{}},'Done':{checkbox:{}}},
+    acadData.certs||[], function(c){return{'Name':nTitle(c.name),'Detail':nRT(c.detail),'Done':nCheck(c.done)};}, function(c){return c.name;}, true, saveAcad);
+}
+
+async function _pushAcadExtras() {
+  var items = [];
+  ((acadData.extra||{}).doing||[]).forEach(function(n){items.push({_n:n,_s:'Currently Doing'});});
+  ((acadData.extra||{}).want||[]).forEach(function(n){items.push({_n:n,_s:'Want to Join'});});
+  return _genericPush('notion_db_acad_extras','Extracurriculars',
+    {'Name':{title:{}},'Status':{select:{options:[{name:'Currently Doing'},{name:'Want to Join'}]}}},
+    items, function(i){return{'Name':nTitle(i._n),'Status':nSelect(i._s)};}, function(i){return i._n;}, false, null);
+}
+
+async function _pushAcadColleges() {
+  return _genericPush('notion_db_acad_colleges','College Research',
+    {'School':{title:{}},'Location':{rich_text:{}},'Status':{select:{options:[{name:'Interested'},{name:'Researching'},{name:'Applying'},{name:'Applied'},{name:'Accepted'},{name:'Rejected'}]}},'Notes':{rich_text:{}}},
+    acadData.colleges||[], function(c){return{'School':nTitle(c.name),'Location':nRT(c.location),'Status':nSelect(c.status),'Notes':nRT(c.notes)};}, function(c){return c.name;}, true, saveAcad);
+}
+
+async function _pushAcadScholarships() {
+  return _genericPush('notion_db_acad_scholarships','Scholarship Tracker',
+    {'Name':{title:{}},'Amount':{rich_text:{}},'Deadline':{date:{}},'Status':{select:{options:[{name:'To Apply'},{name:'In Progress'},{name:'Submitted'},{name:'Won'},{name:"Didn't Get"}]}}},
+    acadData.scholarships||[], function(s){return{'Name':nTitle(s.name),'Amount':nRT(s.amount),'Deadline':nDate(s.deadline),'Status':nSelect(s.status)};}, function(s){return s.name;}, true, saveAcad);
+}
+
+async function _pushAcadResume() {
+  var items = [];
+  ((acadData.resume||{}).experience||[]).forEach(function(i){items.push({_i:i,_t:'Experience'});});
+  ((acadData.resume||{}).skills||[]).forEach(function(i){items.push({_i:i,_t:'Skill'});});
+  ((acadData.resume||{}).links||[]).forEach(function(i){items.push({_i:i,_t:'Portfolio Link'});});
+  return _genericPush('notion_db_acad_resume','Resume & Portfolio',
+    {'Item':{title:{}},'Type':{select:{options:[{name:'Experience'},{name:'Skill'},{name:'Portfolio Link'}]}}},
+    items, function(i){return{'Item':nTitle(i._i),'Type':nSelect(i._t)};}, function(i){return i._i;}, false, null);
+}
+
+async function _pushWorkServices() {
+  return _genericPush('notion_db_work_services','Services I Offer',
+    {'Service':{title:{}},'Rate':{rich_text:{}},'Status':{select:{options:[{name:'Offering'},{name:'Want to Offer'},{name:'Paused'}]}},'Description':{rich_text:{}}},
+    workData.services||[], function(s){return{'Service':nTitle(s.name),'Rate':nRT(s.rate),'Status':nSelect(s.status),'Description':nRT(s.desc)};}, function(s){return s.name;}, true, saveWork);
+}
+
+async function _pushWorkPayments() {
+  return _genericPush('notion_db_work_payments','Income & Payments',
+    {'Source':{title:{}},'Amount':{number:{}},'Date':{date:{}},'For':{rich_text:{}}},
+    workData.payments||[], function(p){return{'Source':nTitle(p.client),'Amount':nNumber(p.amount),'Date':nDate(p.date),'For':nRT(p.desc)};},
+    function(p){return p.client+(p.date?' '+p.date:'');}, true, saveWork);
+}
+
+async function _pushWorkIdeas() {
+  return _genericPush('notion_db_work_ideas','Ideas & Opportunities',
+    {'Idea':{title:{}},'Added':{date:{}}},
+    workData.ideas||[], function(i){return{'Idea':nTitle(i.text),'Added':nDate(i.date)};}, function(i){return i.text;}, true, saveWork);
+}
+
+async function _pushWorkContacts() {
+  return _genericPush('notion_db_work_contacts','Business Contacts',
+    {'Name':{title:{}},'Role':{rich_text:{}},'Contact Info':{rich_text:{}},'Notes':{rich_text:{}}},
+    workData.contacts||[], function(c){return{'Name':nTitle(c.name),'Role':nRT(c.role),'Contact Info':nRT(c.contact),'Notes':nRT(c.notes)};}, function(c){return c.name;}, true, saveWork);
+}
+
+async function _pushSocialContent() {
+  return _genericPush('notion_db_social_content','Content Ideas',
+    {'Idea':{title:{}},'Platform':{select:{options:[{name:'TikTok'},{name:'Instagram Reel'},{name:'YouTube Short'},{name:'Story'}]}},'Status':{select:{options:[{name:'Idea'},{name:'Filming'},{name:'Editing'},{name:'Posted'}]}}},
+    socialData.content||[],
+    function(c){return{'Idea':nTitle(c.title),'Platform':nSelect(c.type),'Status':nSelect(c.status?(c.status.charAt(0).toUpperCase()+c.status.slice(1)):'Idea')};},
+    function(c){return c.title;}, true, saveSocial);
+}
+
+async function _pushSocialSchedule() {
+  var times = (socialData.schedule||{}).times||[];
+  return _genericPush('notion_db_social_schedule','Posting Schedule',
+    {'Day':{title:{}},'Time':{rich_text:{}},'Platform':{select:{options:[{name:'TikTok'},{name:'Instagram'},{name:'YouTube'},{name:'All'}]}}},
+    times, function(t){return{'Day':nTitle(t.day),'Time':nRT(t.time),'Platform':nSelect(t.platform)};},
+    function(t){return t.day+' '+t.time;}, false, null);
+}
+
+async function _pushSocialStats() {
+  return _genericPush('notion_db_social_stats','Stats & Growth',
+    {'Week Of':{title:{}},'Platform':{select:{options:[{name:'TikTok'},{name:'Instagram'},{name:'YouTube'}]}},'Followers':{number:{}},'Views':{number:{}},'Likes':{number:{}},'Notes':{rich_text:{}}},
+    socialData.stats||[],
+    function(s){return{'Week Of':nTitle(s.date||''),'Platform':nSelect(s.platform),'Followers':nNumber(s.followers),'Views':nNumber(s.views),'Likes':nNumber(s.likes),'Notes':nRT(s.notes)};},
+    function(s){return (s.date||'')+(s.platform?' '+s.platform:'');}, true, saveSocial);
+}
+
+async function _pushSocialDeals() {
+  return _genericPush('notion_db_social_deals','Brand Deals & Income',
+    {'Brand':{title:{}},'Amount':{number:{}},'Status':{select:{options:[{name:'Enquiry'},{name:'Negotiating'},{name:'Confirmed'},{name:'Paid'},{name:'Declined'}]}},'Details':{rich_text:{}},'Date':{date:{}}},
+    socialData.deals||[],
+    function(d){return{'Brand':nTitle(d.brand),'Amount':nNumber(d.amount),'Status':nSelect(d.status),'Details':nRT(d.desc),'Date':nDate(d.date)};},
+    function(d){return d.brand;}, true, saveSocial);
+}
+
+async function _pushSocialAudit() {
+  var items = [], audit = socialData.audit||{};
+  (audit.working||[]).forEach(function(i){items.push({_i:i,_t:"What's Working"});});
+  (audit.improve||[]).forEach(function(i){items.push({_i:i,_t:'To Improve'});});
+  (audit.inspo||[]).forEach(function(i){items.push({_i:i,_t:'Account to Study'});});
+  return _genericPush('notion_db_social_audit','Account Audit',
+    {'Item':{title:{}},'Type':{select:{options:[{name:"What's Working"},{name:'To Improve'},{name:'Account to Study'}]}}},
+    items, function(i){return{'Item':nTitle(i._i),'Type':nSelect(i._t)};}, function(i){return i._i;}, false, null);
+}
+
+var _supplementsData = JSON.parse(localStorage.getItem('sofia_supplements')||'[]');
+function _saveSupplements(){localStorage.setItem('sofia_supplements',JSON.stringify(_supplementsData));}
+
+async function _pushSupplements() {
+  return _genericPush('notion_db_supplements','Vitamins & Supplements',
+    {'Name':{title:{}},'Dosage':{rich_text:{}},'When':{select:{options:[{name:'AM'},{name:'PM'},{name:'Both'}]}},'Active':{checkbox:{}}},
+    _supplementsData,
+    function(s){return{'Name':nTitle(s.name),'Dosage':nRT(s.dosage),'When':nSelect(s.when),'Active':nCheck(s.active)};},
+    function(s){return s.name;}, true, _saveSupplements);
+}
+
+async function _pushFinance() {
+  var parentId = localStorage.getItem('notion_parent_page');
+  if (!parentId) throw new Error('Set a parent page ID in Settings → Notion Sync first');
+  var dbId = await notionGetOrCreateDb('notion_db_finance','Finance',parentId,{
+    'Description':{title:{}},'Type':{select:{options:[{name:'Expense'},{name:'Income'},{name:'Subscription'},{name:'Savings Goal'}]}},
+    'Amount':{number:{}},'Date':{date:{}},'Category':{select:{options:[{name:'Food'},{name:'Shopping'},{name:'Transport'},{name:'Entertainment'},{name:'Health'},{name:'Subscriptions'},{name:'Utilities'},{name:'Rent'},{name:'Other'},{name:"Dad's Company"},{name:'Syntrex'},{name:'Client'},{name:'Gift'}]}},
+    'Payment Method':{select:{options:[{name:"Dad's Discover"},{name:"Dad's Debit Card"},{name:'My Debit Card'},{name:'Cash'}]}},
+    'Recurring':{checkbox:{}},'Status':{select:{options:[{name:'Active'},{name:'Paid'},{name:'Cancelled'}]}},
+    'Target Amount':{number:{}},'Saved So Far':{number:{}},'Billing Date':{number:{}}
+  });
+  var existing = await notionQueryAll(dbId);
+  var byId = {};
+  existing.forEach(function(p){byId[p.id]=true;});
+  var count = 0;
+
+  async function upsertFin(src, type, props) {
+    try {
+      if (src.notionId && byId[src.notionId]) {
+        await notionFetch('pages/'+src.notionId,'PATCH',{properties:props});
+      } else {
+        var page = await notionFetch('pages','POST',{parent:{database_id:dbId},properties:props});
+        src.notionId = page.id; byId[page.id]=true;
+      }
+      count++;
+    } catch(e){console.warn('Finance push error:',e.message);}
+  }
+
+  var items = (finData.expenses||[]).concat(finData.income||[]).concat(finData.subscriptions||[]).concat(savingsGoals||[]);
+  for (var i=0;i<(finData.expenses||[]).length;i++){
+    var e=finData.expenses[i];
+    await upsertFin(e,'Expense',{
+      'Description':nTitle(e.description),'Type':nSelect('Expense'),'Amount':nNumber(e.amount),
+      'Date':nDate(e.date),'Category':nSelect(e.category),'Payment Method':nSelect(e.payment),
+      'Recurring':nCheck(e.recurring)
+    });
+  }
+  for (var j=0;j<(finData.income||[]).length;j++){
+    var inc=finData.income[j];
+    await upsertFin(inc,'Income',{
+      'Description':nTitle(inc.description),'Type':nSelect('Income'),'Amount':nNumber(inc.amount),
+      'Date':nDate(inc.date),'Category':nSelect(inc.category)
+    });
+  }
+  for (var k=0;k<(finData.subscriptions||[]).length;k++){
+    var sub=finData.subscriptions[k];
+    await upsertFin(sub,'Subscription',{
+      'Description':nTitle(sub.name),'Type':nSelect('Subscription'),'Amount':nNumber(sub.amount),
+      'Status':nSelect(sub.active?'Active':'Cancelled'),'Billing Date':nNumber(sub.billingDay),'Category':nSelect(sub.category)
+    });
+  }
+  for (var m=0;m<(savingsGoals||[]).length;m++){
+    var g=savingsGoals[m];
+    await upsertFin(g,'Savings Goal',{
+      'Description':nTitle(g.name),'Type':nSelect('Savings Goal'),
+      'Target Amount':nNumber(g.target),'Saved So Far':nNumber(g.saved)
+    });
+  }
+  localStorage.setItem('sofia_fin',JSON.stringify(finData));
+  localStorage.setItem('sofia_savings_goals',JSON.stringify(savingsGoals));
+  _setNotionSyncStatus('notion_db_finance',true,count);
+  return count;
+}
+
+// ============================================================
+// PULL FUNCTIONS
+// ============================================================
+
+async function _pullBfInterests() {
+  var pages = await _genericPullPages('notion_db_bf_interests'); if(!pages.length)return;
+  var ni={Sports:[],Music:[],Food:[],Movies:[],Hobbies:[],Other:[]};
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name'),c=gSelect(p,'Category')||'Other';if(!ni[c])ni[c]=[];if(n&&!ni[c].includes(n))ni[c].push(n);});
+  Object.keys(bfData.interests||{}).forEach(function(c){if(!ni[c])ni[c]=[];(bfData.interests[c]||[]).forEach(function(i){if(!ni[c].includes(i))ni[c].push(i);});});
+  bfData.interests=ni; saveBf(); _setNotionSyncStatus('notion_db_bf_interests',true,pages.length);
+}
+
+async function _pullBfDateIdeas() {
+  var pages = await _genericPullPages('notion_db_bf_date_ideas'); if(!pages.length)return;
+  var ex=bfData.dateIdeas||[];
+  pages.forEach(function(p){if(p.archived)return;var i=gTitle(p,'Idea');if(i&&!ex.includes(i))ex.push(i);});
+  bfData.dateIdeas=ex; saveBf(); _setNotionSyncStatus('notion_db_bf_date_ideas',true,pages.length);
+}
+
+async function _pullBfMemories() {
+  var pages = await _genericPullPages('notion_db_bf_memories'); if(!pages.length)return;
+  var ex=bfData.memories||[];
+  pages.forEach(function(p){if(p.archived)return;var t=gTitle(p,'Title');if(!t)return;var m=ex.find(function(x){return x.notionId===p.id||x.text===t;});if(m){m.notionId=p.id;}else ex.push({text:t,date:gDate(p,'Date'),notionId:p.id});});
+  bfData.memories=ex; saveBf(); _setNotionSyncStatus('notion_db_bf_memories',true,pages.length);
+}
+
+async function _pullBfImportantDates() {
+  var pages = await _genericPullPages('notion_db_bf_imp_dates'); if(!pages.length)return;
+  var ex=bfData.importantDates||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.date=gDate(p,'Date')||m.date;m.note=gRT(p,'Note')||m.note;}else ex.push({name:n,date:gDate(p,'Date'),note:gRT(p,'Note'),notionId:p.id});});
+  bfData.importantDates=ex; saveBf(); _setNotionSyncStatus('notion_db_bf_imp_dates',true,pages.length);
+}
+
+async function _pullBfGifts() {
+  var pages = await _genericPullPages('notion_db_bf_gifts'); if(!pages.length)return;
+  var ex=bfData.gifts||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Gift');if(!n)return;var st=(gSelect(p,'Status')||'Idea').toLowerCase();var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.status=st;}else ex.push({id:Date.now()+Math.random(),name:n,status:st,price:'',tag:'',link:'',notionId:p.id});});
+  bfData.gifts=ex; saveBf(); _setNotionSyncStatus('notion_db_bf_gifts',true,pages.length);
+}
+
+async function _pullPersonalWishlist() {
+  var pages = await _genericPullPages('notion_db_personal_wishlist'); if(!pages.length)return;
+  var ex=personalData.wishlist||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Item');if(!n)return;var got=gSelect(p,'Category')==='Bought';var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.got=got;}else ex.push({name:n,price:gRT(p,'Price'),link:gUrl(p,'Link'),got:got,notionId:p.id});});
+  personalData.wishlist=ex; savePersonal(); _setNotionSyncStatus('notion_db_personal_wishlist',true,pages.length);
+}
+
+async function _pullPersonalRelationships() {
+  var pages = await _genericPullPages('notion_db_personal_rels'); if(!pages.length)return;
+  var ex=personalData.relationships||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.type=gSelect(p,'Relationship')||m.type;m.note=gRT(p,'Note')||m.note;}else ex.push({name:n,type:gSelect(p,'Relationship'),note:gRT(p,'Note'),notionId:p.id});});
+  personalData.relationships=ex; savePersonal(); _setNotionSyncStatus('notion_db_personal_rels',true,pages.length);
+}
+
+async function _pullPersonalTravel() {
+  var pages = await _genericPullPages('notion_db_personal_travel'); if(!pages.length)return;
+  var want=((personalData.travel||{}).want||[]).slice();
+  var been=((personalData.travel||{}).been||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var pl=gTitle(p,'Place');if(!pl)return;if(gSelect(p,'Status')==='Been'){if(!been.includes(pl))been.push(pl);}else{if(!want.includes(pl))want.push(pl);}});
+  personalData.travel={want:want,been:been}; savePersonal(); _setNotionSyncStatus('notion_db_personal_travel',true,pages.length);
+}
+
+async function _pullMediaBooks() {
+  var pages = await _genericPullPages('notion_db_media_books'); if(!pages.length)return;
+  var bks={reading:[],want:[],done:[]};
+  pages.forEach(function(p){if(p.archived)return;var t=gTitle(p,'Title');if(!t)return;var s=gSelect(p,'Status');var k=s==='Reading'?'reading':s==='Finished'?'done':'want';if(!bks[k].includes(t))bks[k].push(t);});
+  ['reading','want','done'].forEach(function(k){((mediaData.books||{})[k]||[]).forEach(function(t){if(!bks[k].includes(t))bks[k].push(t);});});
+  mediaData.books=bks; saveMedia(); _setNotionSyncStatus('notion_db_media_books',true,pages.length);
+}
+
+async function _pullMediaShows() {
+  var pages = await _genericPullPages('notion_db_media_shows'); if(!pages.length)return;
+  var sh={watching:[],want:[],done:[]};
+  pages.forEach(function(p){if(p.archived)return;var t=gTitle(p,'Title');if(!t)return;var s=gSelect(p,'Status');var k=s==='Watching'?'watching':s==='Seen'?'done':'want';if(!sh[k].includes(t))sh[k].push(t);});
+  ['watching','want','done'].forEach(function(k){((mediaData.shows||{})[k]||[]).forEach(function(t){if(!sh[k].includes(t))sh[k].push(t);});});
+  mediaData.shows=sh; saveMedia(); _setNotionSyncStatus('notion_db_media_shows',true,pages.length);
+}
+
+async function _pullMediaCoffee() {
+  var pages = await _genericPullPages('notion_db_media_coffee'); if(!pages.length)return;
+  var want=((mediaData.coffee||{}).want||[]).slice();
+  var been=((mediaData.coffee||{}).been||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;if(gSelect(p,'Status')==='Been & Loved'){if(!been.includes(n))been.push(n);}else{if(!want.includes(n))want.push(n);}});
+  mediaData.coffee={want:want,been:been}; saveMedia(); _setNotionSyncStatus('notion_db_media_coffee',true,pages.length);
+}
+
+async function _pullGoalsCombined() {
+  var pages = await _genericPullPages('notion_db_goals'); if(!pages.length)return;
+  pages.forEach(function(p){
+    if(p.archived)return;
+    var text=gTitle(p,'Title'),type=gSelect(p,'Type'),cat=gSelect(p,'Category')||'Other',why=gRT(p,'Why'),done=gSelect(p,'Status')==='Done';
+    if(type==='Dream Life'){
+      var sec=(gSelect(p,'Dream Life Section')||'').toLowerCase();
+      if(sec&&goalsData.dreamlife)goalsData.dreamlife[sec]=goalsData.dreamlife[sec]||text;
+      return;
+    }
+    var k={Month:'month','This Month':'month','This Year':'year','5 Years':'fiveyear'}[type]||({month:'month',year:'year',fiveyear:'fiveyear'}[type]);
+    if(!k)return;
+    if(!goalsData[k])goalsData[k]=[];
+    var m=goalsData[k].find(function(g){return g.notionId===p.id||g.text===text;});
+    if(m){m.notionId=p.id;m.done=done;m.cat=cat;m.why=why;}else goalsData[k].push({text:text,cat:cat,why:why,done:done,notionId:p.id});
+  });
+  saveGoals(); _setNotionSyncStatus('notion_db_goals',true,pages.length);
+}
+
+async function _pullAcadCerts() {
+  var pages = await _genericPullPages('notion_db_acad_certs'); if(!pages.length)return;
+  var ex=acadData.certs||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.done=gCheck(p,'Done');m.detail=gRT(p,'Detail')||m.detail;}else ex.push({name:n,detail:gRT(p,'Detail'),done:gCheck(p,'Done'),notionId:p.id});});
+  acadData.certs=ex; saveAcad(); _setNotionSyncStatus('notion_db_acad_certs',true,pages.length);
+}
+
+async function _pullAcadExtras() {
+  var pages = await _genericPullPages('notion_db_acad_extras'); if(!pages.length)return;
+  var doing=((acadData.extra||{}).doing||[]).slice();
+  var want=((acadData.extra||{}).want||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;if(gSelect(p,'Status')==='Currently Doing'){if(!doing.includes(n))doing.push(n);}else{if(!want.includes(n))want.push(n);}});
+  acadData.extra={doing:doing,want:want}; saveAcad(); _setNotionSyncStatus('notion_db_acad_extras',true,pages.length);
+}
+
+async function _pullAcadColleges() {
+  var pages = await _genericPullPages('notion_db_acad_colleges'); if(!pages.length)return;
+  var ex=acadData.colleges||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'School');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.status=gSelect(p,'Status')||m.status;m.location=gRT(p,'Location')||m.location;m.notes=gRT(p,'Notes')||m.notes;}else ex.push({name:n,location:gRT(p,'Location'),status:gSelect(p,'Status'),notes:gRT(p,'Notes'),notionId:p.id});});
+  acadData.colleges=ex; saveAcad(); _setNotionSyncStatus('notion_db_acad_colleges',true,pages.length);
+}
+
+async function _pullAcadScholarships() {
+  var pages = await _genericPullPages('notion_db_acad_scholarships'); if(!pages.length)return;
+  var ex=acadData.scholarships||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.status=gSelect(p,'Status')||m.status;m.deadline=gDate(p,'Deadline')||m.deadline;m.amount=gRT(p,'Amount')||m.amount;}else ex.push({name:n,amount:gRT(p,'Amount'),deadline:gDate(p,'Deadline'),status:gSelect(p,'Status'),notionId:p.id});});
+  acadData.scholarships=ex; saveAcad(); _setNotionSyncStatus('notion_db_acad_scholarships',true,pages.length);
+}
+
+async function _pullAcadResume() {
+  var pages = await _genericPullPages('notion_db_acad_resume'); if(!pages.length)return;
+  var exp=((acadData.resume||{}).experience||[]).slice();
+  var skills=((acadData.resume||{}).skills||[]).slice();
+  var links=((acadData.resume||{}).links||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var i=gTitle(p,'Item');if(!i)return;var t=gSelect(p,'Type');if(t==='Experience'){if(!exp.includes(i))exp.push(i);}else if(t==='Skill'){if(!skills.includes(i))skills.push(i);}else{if(!links.includes(i))links.push(i);}});
+  acadData.resume={experience:exp,skills:skills,links:links}; saveAcad(); _setNotionSyncStatus('notion_db_acad_resume',true,pages.length);
+}
+
+async function _pullWorkServices() {
+  var pages = await _genericPullPages('notion_db_work_services'); if(!pages.length)return;
+  var ex=workData.services||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Service');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.status=gSelect(p,'Status')||m.status;m.rate=gRT(p,'Rate')||m.rate;m.desc=gRT(p,'Description')||m.desc;}else ex.push({name:n,rate:gRT(p,'Rate'),desc:gRT(p,'Description'),status:gSelect(p,'Status')||'Offering',notionId:p.id});});
+  workData.services=ex; saveWork(); _setNotionSyncStatus('notion_db_work_services',true,pages.length);
+}
+
+async function _pullWorkPayments() {
+  var pages = await _genericPullPages('notion_db_work_payments'); if(!pages.length)return;
+  var ex=workData.payments||[];
+  pages.forEach(function(p){if(p.archived)return;var c=gTitle(p,'Source');if(!c)return;var m=ex.find(function(x){return x.notionId===p.id;});if(m){m.notionId=p.id;}else ex.push({client:c,amount:gNumber(p,'Amount')||0,date:gDate(p,'Date'),desc:gRT(p,'For'),notionId:p.id});});
+  workData.payments=ex; saveWork(); _setNotionSyncStatus('notion_db_work_payments',true,pages.length);
+}
+
+async function _pullWorkIdeas() {
+  var pages = await _genericPullPages('notion_db_work_ideas'); if(!pages.length)return;
+  var ex=workData.ideas||[];
+  pages.forEach(function(p){if(p.archived)return;var t=gTitle(p,'Idea');if(!t)return;var m=ex.find(function(x){return x.notionId===p.id||x.text===t;});if(m){m.notionId=p.id;}else ex.push({text:t,date:gDate(p,'Added'),notionId:p.id});});
+  workData.ideas=ex; saveWork(); _setNotionSyncStatus('notion_db_work_ideas',true,pages.length);
+}
+
+async function _pullWorkContacts() {
+  var pages = await _genericPullPages('notion_db_work_contacts'); if(!pages.length)return;
+  var ex=workData.contacts||[];
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=ex.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;}else ex.push({name:n,role:gRT(p,'Role'),contact:gRT(p,'Contact Info'),notes:gRT(p,'Notes'),notionId:p.id});});
+  workData.contacts=ex; saveWork(); _setNotionSyncStatus('notion_db_work_contacts',true,pages.length);
+}
+
+async function _pullSocialContent() {
+  var pages = await _genericPullPages('notion_db_social_content'); if(!pages.length)return;
+  var ex=socialData.content||[];
+  pages.forEach(function(p){if(p.archived)return;var t=gTitle(p,'Idea');if(!t)return;var st=(gSelect(p,'Status')||'Idea').toLowerCase();var m=ex.find(function(x){return x.notionId===p.id||x.title===t;});if(m){m.notionId=p.id;m.status=st;}else ex.push({title:t,hook:'',type:gSelect(p,'Platform')||'TikTok',status:st,added:Date.now(),notionId:p.id});});
+  socialData.content=ex; saveSocial(); _setNotionSyncStatus('notion_db_social_content',true,pages.length);
+}
+
+async function _pullSocialSchedule() {
+  var pages = await _genericPullPages('notion_db_social_schedule'); if(!pages.length)return;
+  var ex=((socialData.schedule||{}).times||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var d=gTitle(p,'Day'),t=gRT(p,'Time');if(!d)return;if(!ex.find(function(x){return x.day===d&&x.time===t;}))ex.push({day:d,time:t,platform:gSelect(p,'Platform')||'TikTok'});});
+  if(!socialData.schedule)socialData.schedule={goal:3,times:[],pillars:[]};
+  socialData.schedule.times=ex; saveSocial(); _setNotionSyncStatus('notion_db_social_schedule',true,pages.length);
+}
+
+async function _pullSocialStats() {
+  var pages = await _genericPullPages('notion_db_social_stats'); if(!pages.length)return;
+  var ex=socialData.stats||[];
+  pages.forEach(function(p){if(p.archived)return;var d=gTitle(p,'Week Of'),pl=gSelect(p,'Platform');var m=ex.find(function(x){return x.notionId===p.id||(x.date===d&&x.platform===pl);});if(m){m.notionId=p.id;}else ex.push({date:d,platform:pl,followers:gNumber(p,'Followers')||0,views:gNumber(p,'Views')||0,likes:gNumber(p,'Likes')||0,notes:gRT(p,'Notes'),notionId:p.id});});
+  socialData.stats=ex; saveSocial(); _setNotionSyncStatus('notion_db_social_stats',true,pages.length);
+}
+
+async function _pullSocialDeals() {
+  var pages = await _genericPullPages('notion_db_social_deals'); if(!pages.length)return;
+  var ex=socialData.deals||[];
+  pages.forEach(function(p){if(p.archived)return;var b=gTitle(p,'Brand');if(!b)return;var m=ex.find(function(x){return x.notionId===p.id||x.brand===b;});if(m){m.notionId=p.id;m.status=gSelect(p,'Status')||m.status;}else ex.push({brand:b,amount:gNumber(p,'Amount')||0,status:gSelect(p,'Status')||'Enquiry',desc:gRT(p,'Details'),date:gDate(p,'Date'),notionId:p.id});});
+  socialData.deals=ex; saveSocial(); _setNotionSyncStatus('notion_db_social_deals',true,pages.length);
+}
+
+async function _pullSocialAudit() {
+  var pages = await _genericPullPages('notion_db_social_audit'); if(!pages.length)return;
+  var aud=socialData.audit||{};
+  var working=(aud.working||[]).slice(),improve=(aud.improve||[]).slice(),inspo=(aud.inspo||[]).slice();
+  pages.forEach(function(p){if(p.archived)return;var i=gTitle(p,'Item');if(!i)return;var t=gSelect(p,'Type');if(t==="What's Working"){if(!working.includes(i))working.push(i);}else if(t==='To Improve'){if(!improve.includes(i))improve.push(i);}else{if(!inspo.includes(i))inspo.push(i);}});
+  socialData.audit={working:working,improve:improve,inspo:inspo,notes:aud.notes||''}; saveSocial(); _setNotionSyncStatus('notion_db_social_audit',true,pages.length);
+}
+
+async function _pullSupplements() {
+  var pages = await _genericPullPages('notion_db_supplements'); if(!pages.length)return;
+  pages.forEach(function(p){if(p.archived)return;var n=gTitle(p,'Name');if(!n)return;var m=_supplementsData.find(function(x){return x.notionId===p.id||x.name===n;});if(m){m.notionId=p.id;m.active=gCheck(p,'Active');}else _supplementsData.push({name:n,dosage:gRT(p,'Dosage'),when:gSelect(p,'When')||'AM',active:gCheck(p,'Active'),notionId:p.id});});
+  _saveSupplements(); _setNotionSyncStatus('notion_db_supplements',true,pages.length);
+}
+
+async function _pullFinance() {
+  var pages = await _genericPullPages('notion_db_finance'); if(!pages.length)return;
+  pages.forEach(function(p){
+    if(p.archived)return;
+    var type=gSelect(p,'Type'),desc=gTitle(p,'Description'),amount=gNumber(p,'Amount')||0,date=gDate(p,'Date'),cat=gSelect(p,'Category');
+    if(type==='Expense'){
+      var m=(finData.expenses||[]).find(function(x){return x.notionId===p.id;});
+      if(m){m.amount=amount;m.category=cat||m.category;}
+      else{if(!finData.expenses)finData.expenses=[];finData.expenses.push({id:Date.now()+Math.random(),description:desc,amount:amount,date:date,category:cat,payment:gSelect(p,'Payment Method'),recurring:gCheck(p,'Recurring'),notionId:p.id});}
+    } else if(type==='Income'){
+      var m2=(finData.income||[]).find(function(x){return x.notionId===p.id;});
+      if(m2){m2.amount=amount;}
+      else{if(!finData.income)finData.income=[];finData.income.push({id:Date.now()+Math.random(),description:desc,amount:amount,date:date,category:cat,notionId:p.id});}
+    } else if(type==='Subscription'){
+      var m3=(finData.subscriptions||[]).find(function(x){return x.notionId===p.id;});
+      if(!m3)finData.subscriptions=(finData.subscriptions||[]).concat([{id:Date.now()+Math.random(),name:desc,amount:amount,billingDay:gNumber(p,'Billing Date')||1,category:cat,payment:gSelect(p,'Payment Method'),active:gSelect(p,'Status')==='Active',notionId:p.id}]);
+    } else if(type==='Savings Goal'){
+      var m4=(savingsGoals||[]).find(function(x){return x.notionId===p.id;});
+      if(m4){m4.target=gNumber(p,'Target Amount')||m4.target;m4.saved=gNumber(p,'Saved So Far')||m4.saved;}
+      else savingsGoals.push({id:Date.now()+Math.random(),name:desc,target:gNumber(p,'Target Amount')||0,saved:gNumber(p,'Saved So Far')||0,notionId:p.id});
+    }
+  });
+  localStorage.setItem('sofia_fin',JSON.stringify(finData));
+  localStorage.setItem('sofia_savings_goals',JSON.stringify(savingsGoals));
+  _setNotionSyncStatus('notion_db_finance',true,pages.length);
+}
+
+// ============================================================
+// ORCHESTRATORS
+// ============================================================
+
+var _NOTION_PUSH_LIST = [
+  {fn:_pushBfInterests,key:'notion_db_bf_interests'},{fn:_pushBfDateIdeas,key:'notion_db_bf_date_ideas'},
+  {fn:_pushBfMemories,key:'notion_db_bf_memories'},{fn:_pushBfImportantDates,key:'notion_db_bf_imp_dates'},
+  {fn:_pushBfGifts,key:'notion_db_bf_gifts'},{fn:_pushPersonalWishlist,key:'notion_db_personal_wishlist'},
+  {fn:_pushPersonalRelationships,key:'notion_db_personal_rels'},{fn:_pushPersonalTravel,key:'notion_db_personal_travel'},
+  {fn:_pushMediaBooks,key:'notion_db_media_books'},{fn:_pushMediaShows,key:'notion_db_media_shows'},
+  {fn:_pushMediaCoffee,key:'notion_db_media_coffee'},{fn:_pushGoalsCombined,key:'notion_db_goals'},
+  {fn:_pushAcadCerts,key:'notion_db_acad_certs'},{fn:_pushAcadExtras,key:'notion_db_acad_extras'},
+  {fn:_pushAcadColleges,key:'notion_db_acad_colleges'},{fn:_pushAcadScholarships,key:'notion_db_acad_scholarships'},
+  {fn:_pushAcadResume,key:'notion_db_acad_resume'},{fn:_pushWorkServices,key:'notion_db_work_services'},
+  {fn:_pushWorkPayments,key:'notion_db_work_payments'},{fn:_pushWorkIdeas,key:'notion_db_work_ideas'},
+  {fn:_pushWorkContacts,key:'notion_db_work_contacts'},{fn:_pushSocialContent,key:'notion_db_social_content'},
+  {fn:_pushSocialSchedule,key:'notion_db_social_schedule'},{fn:_pushSocialStats,key:'notion_db_social_stats'},
+  {fn:_pushSocialDeals,key:'notion_db_social_deals'},{fn:_pushSocialAudit,key:'notion_db_social_audit'},
+  {fn:_pushSupplements,key:'notion_db_supplements'},{fn:_pushFinance,key:'notion_db_finance'}
+];
+
+var _NOTION_PULL_LIST = [
+  _pullBfInterests,_pullBfDateIdeas,_pullBfMemories,_pullBfImportantDates,_pullBfGifts,
+  _pullPersonalWishlist,_pullPersonalRelationships,_pullPersonalTravel,
+  _pullMediaBooks,_pullMediaShows,_pullMediaCoffee,_pullGoalsCombined,
+  _pullAcadCerts,_pullAcadExtras,_pullAcadColleges,_pullAcadScholarships,_pullAcadResume,
+  _pullWorkServices,_pullWorkPayments,_pullWorkIdeas,_pullWorkContacts,
+  _pullSocialContent,_pullSocialSchedule,_pullSocialStats,_pullSocialDeals,_pullSocialAudit,
+  _pullSupplements,_pullFinance
+];
+
+async function pushAllToNotion() {
+  var btn = document.querySelector('button[onclick="pushAllToNotion()"]');
+  if (btn) { btn.disabled=true; btn.textContent='Pushing...'; }
+  var total = 0;
+  for (var i=0; i<_NOTION_PUSH_LIST.length; i++) {
+    try { var n = await _NOTION_PUSH_LIST[i].fn(); total += (n||0); }
+    catch(e) { _setNotionSyncStatus(_NOTION_PUSH_LIST[i].key,false,0); console.warn('Push error',_NOTION_PUSH_LIST[i].key,e.message); }
+  }
+  if (btn) { btn.disabled=false; btn.textContent='Push All →'; }
+  notionToast('Pushed '+total+' items to Notion ✓');
+  showNotionBanner('Pushed '+total+' items to Notion', false);
+}
+
+async function pullFromAllNotion() {
+  var btn = document.querySelector('button[onclick="pullFromAllNotion()"]');
+  if (btn) { btn.disabled=true; btn.textContent='Pulling...'; }
+  try {
+    for (var i=0; i<_NOTION_PULL_LIST.length; i++) {
+      try { await _NOTION_PULL_LIST[i](); } catch(e){ console.warn('Pull error',e.message); }
+    }
+    notionToast('Pulled from Notion ✓');
+    showNotionBanner('Pull complete — data updated', false);
+  } catch(e) {
+    notionToast(e.message||'Pull failed', true);
+    showNotionBanner(e.message||'Pull failed', true);
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='← Pull All'; }
+  }
+}
+
+// ============================================================
+// SETTINGS UI HANDLERS
+// ============================================================
+
+function saveNotionToken() {
+  var inp = document.getElementById('notion-token-input'); if (!inp) return;
+  var t = inp.value.trim();
+  if (t) { localStorage.setItem('notion_token',t); inp.value=''; inp.placeholder='secret_...saved ✓'; notionToast('Token saved ✓'); }
+}
+
+function saveNotionParentPage() {
+  var inp = document.getElementById('notion-parent-page-input'); if (!inp) return;
+  var id = inp.value.trim().replace(/-/g,'');
+  if (id) { localStorage.setItem('notion_parent_page',id); inp.value=''; inp.placeholder=id.slice(0,8)+'...saved ✓'; notionToast('Parent page saved ✓'); }
+}
+
+function toggleNotionAutoSync() {
+  var next = localStorage.getItem('notion_autosync') !== 'true';
+  localStorage.setItem('notion_autosync', next?'true':'false');
+  var t = document.getElementById('notion-autosync-toggle');
+  if (t) t.classList.toggle('on', next);
+}
+
+function toggleNotionHelp() {
+  var body = document.getElementById('notion-help-body');
+  var ch = document.getElementById('notion-help-chevron');
+  if (!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (ch) ch.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function loadNotionSettings() {
+  var ti = document.getElementById('notion-token-input');
+  if (ti) { ti.value=''; ti.placeholder=localStorage.getItem('notion_token')?'secret_...saved ✓':'secret_...'; }
+  var pi = document.getElementById('notion-parent-page-input');
+  if (pi) { var sp=localStorage.getItem('notion_parent_page'); pi.value=''; pi.placeholder=sp?(sp.slice(0,8)+'...saved ✓'):'Paste page ID from Notion URL...'; }
+  var at = document.getElementById('notion-autosync-toggle');
+  if (at) at.classList.toggle('on', localStorage.getItem('notion_autosync')==='true');
+  renderNotionDbStatus();
+}
+
+// Hook into loadSettingsPage
+var _notionPrevLoadSettings = loadSettingsPage;
+loadSettingsPage = function() { _notionPrevLoadSettings(); loadNotionSettings(); };
+
+// ============================================================
+// AUTO-SYNC — patch localStorage.setItem (debounced, per-key)
+// ============================================================
+
+var _notionKeyMap = {
+  'sofia_bf': [_pushBfInterests,_pushBfDateIdeas,_pushBfMemories,_pushBfImportantDates,_pushBfGifts],
+  'sofia_personal': [_pushPersonalWishlist,_pushPersonalRelationships,_pushPersonalTravel],
+  'sofia_media': [_pushMediaBooks,_pushMediaShows,_pushMediaCoffee],
+  'sofia_goals': [_pushGoalsCombined],
+  'sofia_acad': [_pushAcadCerts,_pushAcadExtras,_pushAcadColleges,_pushAcadScholarships,_pushAcadResume],
+  'sofia_work': [_pushWorkServices,_pushWorkPayments,_pushWorkIdeas,_pushWorkContacts],
+  'sofia_social': [_pushSocialContent,_pushSocialSchedule,_pushSocialStats,_pushSocialDeals,_pushSocialAudit],
+  'sofia_fin': [_pushFinance], 'sofia_savings_goals': [_pushFinance],
+  'sofia_supplements': [_pushSupplements]
+};
+
+(function(){
+  var _orig = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value) {
+    _orig(key, value);
+    if (localStorage.getItem('notion_autosync')!=='true') return;
+    if (!localStorage.getItem('notion_token')) return;
+    var fns = _notionKeyMap[key]; if (!fns) return;
+    clearTimeout(window._notionAutoTimer);
+    window._notionAutoTimer = setTimeout(function(){
+      fns.forEach(function(fn){ fn().catch(function(e){console.warn('Notion auto-sync:',e.message);}); });
+    }, 2000);
+  };
+})();
 
 var _appBooted = false;
 
